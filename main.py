@@ -4,3 +4,5 @@ from programs import *
 
 if __name__ == "__main__":
     run_tests()
+
+    # broadcast bit, better FE, defaults, ?'s and simpler unembed

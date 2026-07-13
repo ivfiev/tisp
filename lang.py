@@ -1,7 +1,7 @@
 from model import *
 
 D = 192
-E = {e: [1.0 if j == i else 0.0 for j in range(D)] for i, e in enumerate("^abcdefghijklmnopqrstuvwxyz|?$")}
+E = {e: [1.0 if j == i else 0.0 for j in range(D)] for i, e in enumerate("^abcdefghijklmnopqrstuvwxyz0123456789,|?$")}
 P = {p: [1.0 if j == p + len(E) else 0.0 for j in range(D)] for p in range(18)}
 
 
@@ -93,6 +93,14 @@ def add_one_hot(a, b, c):
     return [
         *[["ZERO", i] for i in range(a, a + c)],
         *[["AND", [i, j], [a + (i - a) + (j - b)]] for j in range(b, b + c) for i in range(a, a + c) if (i - a) + (j - b) < c],
+    ]
+
+
+# a = a + 1
+def inc_one_hot(a, b):
+    return [
+        *[["ZERO", i] for i in range(a, a + b)],
+        *[["AND", [i, i], [i + 1]] for i in range(a, a + b)],
     ]
 
 

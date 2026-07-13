@@ -215,6 +215,91 @@ def reverse(s: str) -> str:
     return run(code, f"^{s}|{str('?' * len(s))}$")
 
 
+def kv(s: str) -> str:
+    a = FeatureAllocator()
+    A = a.alloc()
+    COMMA = a.alloc(len(P))
+    PIPE = a.alloc(len(P))
+    GT = a.alloc()
+    LT = a.alloc()
+    BETWEEN = a.alloc()
+    OUTSIDE = a.alloc()
+    POS = a.alloc(len(P))
+    VALUE = a.alloc(len(E))
+    code = [
+        [
+            [],
+            [
+                ["NOT", [A], [A]],
+            ],
+        ],
+        [
+            [
+                [
+                    # copy pos of , into each token
+                    ["QUERY", [A]],
+                    ["KEY", [who(",")]],
+                    ["VALUE", slice(a.POS, len(P))],
+                    ["PROJ", slice(COMMA, len(P))],
+                ],
+                [
+                    # copy pos of | into each token
+                    ["QUERY", [A]],
+                    ["KEY", [who("|")]],
+                    ["VALUE", slice(a.POS, len(P))],
+                    ["PROJ", slice(PIPE, len(P))],
+                ],
+            ],
+            [
+                *gt_one_hot(a.POS, COMMA, len(P), GT),  # flag if to the right of ,
+                *lt_one_hot(a.POS, PIPE, len(P), LT),  # flag if to the left of |
+            ],
+        ],
+        [
+            [],
+            [
+                ["AND", [GT, LT], [BETWEEN]],
+            ],
+        ],
+        [
+            [],
+            [
+                ["NOT", [BETWEEN], [OUTSIDE]],
+            ],
+        ],
+        [
+            [
+                [
+                    # copy twin token's position
+                    ["QUERY", [BETWEEN, *slice(a.EMB, len(E))]],
+                    ["KEY", [OUTSIDE, *slice(a.EMB, len(E))]],
+                    ["VALUE", slice(a.POS, len(P))],
+                    ["PROJ", slice(POS, len(P))],
+                ],
+            ],
+            [
+                *inc_one_hot(POS, len(P)),
+            ],
+        ],
+        [
+            [
+                [
+                    # copy target token's position
+                    ["QUERY", slice(POS, len(P))],
+                    ["KEY", slice(a.POS, len(P))],
+                    ["VALUE", slice(a.EMB, len(E))],
+                    ["PROJ", slice(VALUE, len(E))],
+                ],
+            ],
+            [],
+        ],
+        [
+            lambda m: "".join([un_E(u[VALUE : VALUE + len(E)]) for u in m if u[BETWEEN] == 1.0]),
+        ],
+    ]
+    return run(code, f"^{s}|{str('?' * len(s.split(',')[1]))}$")  # ?'s are currently redundant
+
+
 def run_tests():
     print(
         "palindrome",
@@ -253,6 +338,17 @@ def run_tests():
                 reverse("a") == "a",
                 reverse("hello") == "olleh",
                 reverse("xyzab") == "bazyx",
+            ]
+        ),
+    )
+    print(
+        "kv        ",
+        all(
+            [
+                kv("a1b2c3,cba") == "321",
+                kv("a1b2z8y1,yzb") == "182",
+                kv("d7x3w3,xwxw") == "3333",
+                kv("d7x3w3,xwdw") == "3373",
             ]
         ),
     )
