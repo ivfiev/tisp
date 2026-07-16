@@ -1,8 +1,8 @@
 from model import *
 
 D = 192
-E = {e: [1.0 if j == i else 0.0 for j in range(D)] for i, e in enumerate("^abcdefghijklmnopqrstuvwxyz0123456789,|?$")}
-P = {p: [1.0 if j == p + len(E) else 0.0 for j in range(D)] for p in range(18)}
+E = {e: [1.0 if j in [0, 1 + i] else 0.0 for j in range(D)] for i, e in enumerate("^abcdefghijklmnopqrstuvwxyz0123456789,|?$")}
+P = {p: [1.0 if j == 1 + p + len(E) else 0.0 for j in range(D)] for p in range(18)}
 
 
 def un_E(u: vec) -> str:
@@ -15,7 +15,7 @@ def un_E(u: vec) -> str:
 
 
 def build_ffn(codes: list[list]) -> FFN:
-    logic = ["AND", "OR", "NOT"]
+    logic = ["AND", "OR", "NOT", "NOR", "NAND", "TWO"]
     other = ["ZERO"]
     n = max(1, sum(code[0] in [*logic, *other] for code in codes))
     input = [[0.0] * D for _ in range(n)]
@@ -33,6 +33,33 @@ def build_ffn(codes: list[list]) -> FFN:
             for w in write:
                 output[w][ip] = -3.0 if c == "NOT" else 1.0
                 bias_out[w] = 1.0 if c == "NOT" else 0.0
+        if c == "NOR":
+            features = code[1]
+            write = code[2]
+            for f in features:
+                input[ip][f] = -1.0
+            bias_in[ip] = 1.0
+            for w in write:
+                output[w][ip] = 1.0
+                bias_out[w] = 0.0
+        if c == "NAND":
+            features = code[1]
+            write = code[2]
+            for f in features:
+                input[ip][f] = -1.0
+            bias_in[ip] = len({*features})
+            for w in write:
+                output[w][ip] = 1.0
+                bias_out[w] = 0.0
+        if c == "TWO":
+            features = code[1]
+            write = code[2]
+            for f in features:
+                input[ip][f] = 1.0
+            bias_in[ip] = -1.0
+            for w in write:
+                output[w][ip] = 1.0
+                bias_out[w] = 0.0
         if c == "ZERO":
             bit = code[1]
             input[ip][bit] = 1.0
@@ -69,7 +96,7 @@ def run(program: list[list], input: str):
 
 
 def who(c):
-    return next(i for i, e in enumerate(E[c]) if e == 1.0)
+    return next(i for i, e in enumerate(E[c]) if e == 1.0 and i != 0)  # skips ANY flag
 
 
 def where(n):
@@ -109,21 +136,29 @@ def eq_one_hot(a, b, c, d):
     return [["AND", [a + i, b + i], [d]] for i in range(c)]
 
 
+# d = a[0:c] != b[0:c], assume only one 1
+def neq_one_hot(a, b, c, d):
+    x = [["TWO", [a + i, *[b + j for j in range(c) if j != i]], [d]] for i in range(c)]
+    return x
+
+
 # d = a[0:c] < b[0:c], assume only one 1
-def lt_one_hot(a, b, c, d):
-    return [["AND", [a + j, b + i], [d]] for i in range(c) for j in range(i)]
-
-
-# d = a[0:c] > b[0:c], assume only one 1
-def gt_one_hot(a, b, c, d):
-    return [["AND", [a + i, b + j], [d]] for i in range(c) for j in range(i)]
+# todo TWO
+# def lt_one_hot(a, b, c, d):
+#     return [["AND", [a + j, b + i], [d]] for i in range(c) for j in range(i)]
+#
+#
+# # d = a[0:c] > b[0:c], assume only one 1
+# def gt_one_hot(a, b, c, d):
+#     return [["AND", [a + i, b + j], [d]] for i in range(c) for j in range(i)]
 
 
 class FeatureAllocator:
     def __init__(self):
-        self.n = len(E) + len(P)
-        self.EMB = 0
-        self.POS = len(E)
+        self.ANY = 0
+        self.EMB = 1
+        self.POS = 1 + len(E)
+        self.n = 1 + len(E) + len(P)
 
     def alloc(self, range=1):
         assert self.n + range < D

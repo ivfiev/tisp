@@ -1,8 +1,8 @@
 from model import *
 from lang import *
-from programs import *
 
 if __name__ == "__main__":
-    run_tests()
+    print(5)
 
     # broadcast bit, better FE, defaults, ?'s and simpler unembed
+    # compile/load/save. must do matrix unembed
