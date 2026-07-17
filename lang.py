@@ -1,9 +1,5 @@
 from model import *
 
-D = 192
-E = {e: [1.0 if j in [0, 1 + i] else 0.0 for j in range(D)] for i, e in enumerate("^abcdefghijklmnopqrstuvwxyz0123456789,|?$")}
-P = {p: [1.0 if j == 1 + p + len(E) else 0.0 for j in range(D)] for p in range(18)}
-
 
 def un_E(u: vec) -> str:
     assert len(u) == len(E)
@@ -84,6 +80,19 @@ def build_attn(codes: list[list]) -> Attention:
     return Attention(t(q), t(k), t(v), p)
 
 
+def build_unembed(code: list) -> tuple[mat, vec, str]:
+    r = code[-1]
+    m = [[0.0 for _ in range(len(V))] for _ in range(D)]
+    b = [0.0 for _ in range(len(V))]
+    if code[0][0] == "BINARY":
+        f = code[0][1]
+        zero = V.index("0")
+        one = V.index("1")
+        m[f][one] = 2.0
+        b[zero] = 1.0
+    return (m, b, r)
+
+
 def run(program: list[list], input: str):
     blocks = []
     unembed = None
@@ -91,8 +100,8 @@ def run(program: list[list], input: str):
         if len(code) == 2:
             blocks.append(Block([build_attn(code) for code in code[0]], build_ffn(code[1])))
         elif len(code) == 1:
-            unembed = code[0]
-    return Transformer(blocks, E, P, unembed)(input)
+            unembed = build_unembed(code[0])
+    return Transformer(blocks, E, P, unembed)(input)  # pyright: ignore[reportArgumentType]
 
 
 def who(c):

@@ -1,6 +1,11 @@
 type vec = list[float]
 type mat = list[list[float]]
 
+D = 192
+V = "^abcdefghijklmnopqrstuvwxyz0123456789,|?$"
+E = {e: [1.0 if j in [0, 1 + i] else 0.0 for j in range(D)] for i, e in enumerate(V)}
+P = {p: [1.0 if j == 1 + p + len(E) else 0.0 for j in range(D)] for p in range(18)}
+
 
 def mm(a: mat, b: mat) -> mat:
     assert all(len(r) == len(b) for r in a)
@@ -94,16 +99,29 @@ class Block:
 
 
 class Transformer:
-    def __init__(self, blocks: list[Block], emb: dict, pos: dict, unembed):
+    def __init__(self, blocks: list[Block], emb: dict, pos: dict, unembed: tuple):
         self.blocks = blocks
         self.emb = emb
         self.pos = pos
         self.unembed = unembed
 
     def __call__(self, x: str):
+        m = self._embed(x)
+        for b in self.blocks:
+            m = b(m)
+        return self._unembed(m)
+
+    def _embed(self, x: str):
         e = [self.emb[c] for c in x]
         p = [self.pos[i] for i in range(len(x))]
         m = ma(e, p)
-        for b in self.blocks:
-            m = b(m)
-        return self.unembed(m)
+        return m
+
+    def _unembed(self, m: mat):
+        u, b, r = self.unembed
+        [i, j] = list(map(int, r.split(":")))
+        m = m[i:j]
+        m = mm(m, u)
+        m = va(m, b)
+        preds = [V[v.index(max(v))] for v in m]
+        return "".join(preds)

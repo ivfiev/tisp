@@ -1,7 +1,7 @@
 from lang import *
 
 
-def is_palindrome(s: str) -> bool:
+def is_palindrome(s: str) -> str:
     a = FeatureAllocator()
     S = a.alloc()
     POS = a.alloc(len(P))
@@ -50,10 +50,10 @@ def is_palindrome(s: str) -> bool:
             ],
         ],
         [
-            lambda m: m[0][RESULT],
+            [["BINARY", RESULT], "0:1"],
         ],
     ]
-    return run(code, f"^{s}$") == 1.0
+    return run(code, f"^{s}$")
 
 
 # def count_letter(s: str, c: str) -> int:
@@ -291,14 +291,14 @@ def run_tests():
         "palindrome",
         all(
             [
-                is_palindrome("a"),
-                is_palindrome("aa"),
-                is_palindrome("ababa"),
-                is_palindrome("abba"),
-                is_palindrome("abbba"),
-                is_palindrome("nolemonnomelon"),
-                not is_palindrome("hfaksdfhs"),
-                not is_palindrome("ababababab"),
+                is_palindrome("a") == "1",
+                is_palindrome("aa") == "1",
+                is_palindrome("ababa") == "1",
+                is_palindrome("abba") == "1",
+                is_palindrome("abbba") == "1",
+                is_palindrome("nolemonnomelon") == "1",
+                is_palindrome("hfaksdfhs") == "0",
+                is_palindrome("ababababab") == "0",
             ]
         ),
     )
