@@ -1,15 +1,6 @@
 from model import *
 
 
-def un_E(u: vec) -> str:
-    assert len(u) == len(E)
-    assert sum(u) == 1.0
-    for k, v in E.items():
-        if v[: len(E)] == u:
-            return k
-    raise Exception("cannot unembed")
-
-
 def build_ffn(codes: list[list]) -> FFN:
     logic = ["AND", "OR", "NOT", "NOR", "NAND", "TWO"]
     other = ["ZERO"]
@@ -90,10 +81,19 @@ def build_unembed(code: list) -> tuple[mat, vec, str]:
         one = V.index("1")
         m[f][one] = 2.0
         b[zero] = 1.0
+    if code[0][0] == "NUM":
+        f = code[0][1]
+        z = V.index("0")
+        for i in range(10):
+            m[i + f][i + z] = 1.0 + i
+    if code[0][0] == "CHAR":
+        f = code[0][1]
+        for i in range(len(V)):
+            m[i + f][i] = 1.0
     return (m, b, r)
 
 
-def run(program: list[list], input: str):
+def run(program: list[list], input: str) -> str:
     blocks = []
     unembed = None
     for code in program:
@@ -152,14 +152,13 @@ def neq_one_hot(a, b, c, d):
 
 
 # d = a[0:c] < b[0:c], assume only one 1
-# todo TWO
-# def lt_one_hot(a, b, c, d):
-#     return [["AND", [a + j, b + i], [d]] for i in range(c) for j in range(i)]
-#
-#
-# # d = a[0:c] > b[0:c], assume only one 1
-# def gt_one_hot(a, b, c, d):
-#     return [["AND", [a + i, b + j], [d]] for i in range(c) for j in range(i)]
+def lt_one_hot(a, b, c, d):
+    return [["AND", [a + j, b + i], [d]] for i in range(c) for j in range(i)]
+
+
+# d = a[0:c] > b[0:c], assume only one 1
+def gt_one_hot(a, b, c, d):
+    return [["AND", [a + i, b + j], [d]] for i in range(c) for j in range(i)]
 
 
 class FeatureAllocator:

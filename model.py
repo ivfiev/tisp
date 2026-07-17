@@ -119,8 +119,15 @@ class Transformer:
 
     def _unembed(self, m: mat):
         u, b, r = self.unembed
-        [i, j] = list(map(int, r.split(":")))
-        m = m[i:j]
+        ij = [int(x) for x in r.split(":") if x]
+        # TODO - pass the range at runtime instead
+        match ij:
+            case []:
+                m = m[:]
+            case [i]:
+                m = m[i:]
+            case [i, j]:
+                m = m[i:j]
         m = mm(m, u)
         m = va(m, b)
         preds = [V[v.index(max(v))] for v in m]

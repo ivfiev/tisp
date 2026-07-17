@@ -56,7 +56,7 @@ def is_palindrome(s: str) -> str:
     return run(code, f"^{s}$")
 
 
-# def count_letter(s: str, c: str) -> int:
+# def count_letter(s: str, c: str) -> str:
 #     a = FeatureAllocator()
 #     POS = a.alloc(len(P))
 #     code = [
@@ -71,219 +71,122 @@ def is_palindrome(s: str) -> str:
 #             ],
 #             [],
 #         ],
-#         [lambda m: int(sum(m[0][POS : POS + len(P)]))],
+#         [
+#             [["NUMERIC", POS], "0:1"],
+#         ],
 #     ]
 #     return run(code, f"^{s}$")
-#
-#
-# def strcmp(s1: str, s2: str) -> bool:
-#     a = FeatureAllocator()
-#     A = a.alloc()
-#     POS = a.alloc(len(P))
-#     BRO = a.alloc(len(E))
-#     EQ = a.alloc()
-#     LT = a.alloc()
-#     RESULT = a.alloc()
-#     C = a.alloc()
-#     code = [
-#         [
-#             [],
-#             [["NOT", [A], [A]]],
-#         ],
-#         [
-#             [
-#                 [
-#                     # copy pos of | into each token
-#                     ["QUERY", [A]],
-#                     ["KEY", [who("|")]],
-#                     ["VALUE", slice(a.POS, len(P))],
-#                     ["PROJ", slice(POS, len(P))],
-#                 ],
-#             ],
-#             [
-#                 *add_one_hot(POS, a.POS, len(P)),  # add curr pos to |'s pos to obtain opposite
-#                 *lt_one_hot(a.POS, POS, len(P), LT),  # flag if to the left of |
-#             ],
-#         ],
-#         [
-#             [
-#                 [
-#                     # copy the twin token embedding
-#                     ["QUERY", slice(POS, len(P))],
-#                     ["KEY", slice(a.POS, len(P))],
-#                     ["VALUE", slice(a.EMB, len(E))],
-#                     ["PROJ", slice(BRO, len(E))],
-#                 ],
-#             ],
-#             [
-#                 *eq_one_hot(a.EMB, BRO, len(E), EQ),  # EQ = 1 if twin matches
-#             ],
-#         ],
-#         [
-#             [],
-#             [
-#                 ["NOT", [EQ], [EQ]],  # negate EQ for aggregation
-#                 ["NOT", [who("^")], [C]],  # only want to hear from letters
-#             ],
-#         ],
-#         [
-#             [
-#                 [
-#                     # aggregate all !EQs, if >0 then return false else true
-#                     ["QUERY", [who("^"), who("^")]],
-#                     ["KEY", [LT, C]],
-#                     ["VALUE", [EQ]],
-#                     ["PROJ", [RESULT]],
-#                 ],
-#             ],
-#             [],
-#         ],
-#         [lambda m: m[0][RESULT]],
-#     ]
-#     return run(code, f"^{s1}|{s2}$") + run(code, f"^{s2}|{s1}$") == 0.0  # meh
-#
-#
-# def reverse(s: str) -> str:
-#     a = FeatureAllocator()
-#     A = a.alloc()
-#     MID = a.alloc(len(P))
-#     POS = a.alloc(len(P))
-#     BRO = a.alloc(len(E))
-#     EQ = a.alloc()
-#     GT = a.alloc()
-#     RESULT = a.alloc()
-#     C = a.alloc()
-#     code = [
-#         [
-#             [],
-#             [["NOT", [A], [A]]],
-#         ],
-#         [
-#             [
-#                 [
-#                     # copy pos of $ into each token
-#                     ["QUERY", [A]],
-#                     ["KEY", [who("$")]],
-#                     ["VALUE", slice(a.POS, len(P))],
-#                     ["PROJ", slice(POS, len(P))],
-#                 ],
-#                 [
-#                     # copy pos of | into each token
-#                     ["QUERY", [A]],
-#                     ["KEY", [who("|")]],
-#                     ["VALUE", slice(a.POS, len(P))],
-#                     ["PROJ", slice(MID, len(P))],
-#                 ],
-#             ],
-#             [
-#                 *sub_one_hot(POS, a.POS, len(P)),  # sub |'s pos from curr pos to obtain opposite
-#                 *gt_one_hot(a.POS, MID, len(P), GT),  # flag if to the right of |
-#             ],
-#         ],
-#         [
-#             [
-#                 [
-#                     # copy the twin token embedding
-#                     ["QUERY", slice(POS, len(P))],
-#                     ["KEY", slice(a.POS, len(P))],
-#                     ["VALUE", slice(a.EMB, len(E))],
-#                     ["PROJ", slice(BRO, len(E))],
-#                 ],
-#             ],
-#             [
-#                 ["AND", [who("?"), GT], [RESULT]],
-#             ],
-#         ],
-#         [
-#             lambda m: "".join(un_E(u[BRO : BRO + len(E)]) for u in m if u[RESULT] == 1.0),
-#         ],
-#     ]
-#     return run(code, f"^{s}|{str('?' * len(s))}$")
-#
-#
-# def kv(s: str) -> str:
-#     a = FeatureAllocator()
-#     A = a.alloc()
-#     COMMA = a.alloc(len(P))
-#     PIPE = a.alloc(len(P))
-#     GT = a.alloc()
-#     LT = a.alloc()
-#     BETWEEN = a.alloc()
-#     OUTSIDE = a.alloc()
-#     POS = a.alloc(len(P))
-#     VALUE = a.alloc(len(E))
-#     code = [
-#         [
-#             [],
-#             [
-#                 ["NOT", [A], [A]],
-#             ],
-#         ],
-#         [
-#             [
-#                 [
-#                     # copy pos of , into each token
-#                     ["QUERY", [A]],
-#                     ["KEY", [who(",")]],
-#                     ["VALUE", slice(a.POS, len(P))],
-#                     ["PROJ", slice(COMMA, len(P))],
-#                 ],
-#                 [
-#                     # copy pos of | into each token
-#                     ["QUERY", [A]],
-#                     ["KEY", [who("|")]],
-#                     ["VALUE", slice(a.POS, len(P))],
-#                     ["PROJ", slice(PIPE, len(P))],
-#                 ],
-#             ],
-#             [
-#                 *gt_one_hot(a.POS, COMMA, len(P), GT),  # flag if to the right of ,
-#                 *lt_one_hot(a.POS, PIPE, len(P), LT),  # flag if to the left of |
-#             ],
-#         ],
-#         [
-#             [],
-#             [
-#                 ["AND", [GT, LT], [BETWEEN]],
-#             ],
-#         ],
-#         [
-#             [],
-#             [
-#                 ["NOT", [BETWEEN], [OUTSIDE]],
-#             ],
-#         ],
-#         [
-#             [
-#                 [
-#                     # copy twin token's position
-#                     ["QUERY", [BETWEEN, *slice(a.EMB, len(E))]],
-#                     ["KEY", [OUTSIDE, *slice(a.EMB, len(E))]],
-#                     ["VALUE", slice(a.POS, len(P))],
-#                     ["PROJ", slice(POS, len(P))],
-#                 ],
-#             ],
-#             [
-#                 *inc_one_hot(POS, len(P)),
-#             ],
-#         ],
-#         [
-#             [
-#                 [
-#                     # copy target token's position
-#                     ["QUERY", slice(POS, len(P))],
-#                     ["KEY", slice(a.POS, len(P))],
-#                     ["VALUE", slice(a.EMB, len(E))],
-#                     ["PROJ", slice(VALUE, len(E))],
-#                 ],
-#             ],
-#             [],
-#         ],
-#         [
-#             lambda m: "".join([un_E(u[VALUE : VALUE + len(E)]) for u in m if u[BETWEEN] == 1.0]),
-#         ],
-#     ]
-#     return run(code, f"^{s}|{str('?' * len(s.split(',')[1]))}$")  # ?'s are currently redundant
+
+
+def reverse(s: str) -> str:
+    a = FeatureAllocator()
+    POS = a.alloc(len(P))
+    BRO = a.alloc(len(E))
+    code = [
+        [
+            [
+                [
+                    # copy pos of $ into each token
+                    ["QUERY", [a.ANY]],
+                    ["KEY", [who("$")]],
+                    ["VALUE", slice(a.POS, len(P))],
+                    ["PROJ", slice(POS, len(P))],
+                ],
+            ],
+            [
+                *sub_one_hot(POS, a.POS, len(P)),  # obtain mirrored pos
+            ],
+        ],
+        [
+            [
+                [
+                    # copy the twin token embedding
+                    ["QUERY", slice(POS, len(P))],
+                    ["KEY", slice(a.POS, len(P))],
+                    ["VALUE", slice(a.EMB, len(E))],
+                    ["PROJ", slice(BRO, len(E))],
+                ],
+            ],
+            [],
+        ],
+        [
+            [["CHAR", BRO], "1:-1"],
+        ],
+    ]
+    return run(code, f"^{s}$")
+
+
+def kv(s: str, r: str) -> str:
+    a = FeatureAllocator()
+    COMMA = a.alloc(len(P))
+    EOF = a.alloc(len(P))
+    GT = a.alloc()
+    LT = a.alloc()
+    BETWEEN = a.alloc()
+    OUTSIDE = a.alloc()
+    POS = a.alloc(len(P))
+    VALUE = a.alloc(len(E))
+    code = [
+        [
+            [
+                [
+                    # copy pos of , into each token
+                    ["QUERY", [a.ANY]],
+                    ["KEY", [who(",")]],
+                    ["VALUE", slice(a.POS, len(P))],
+                    ["PROJ", slice(COMMA, len(P))],
+                ],
+                [
+                    # copy pos of $ into each token
+                    ["QUERY", [a.ANY]],
+                    ["KEY", [who("$")]],
+                    ["VALUE", slice(a.POS, len(P))],
+                    ["PROJ", slice(EOF, len(P))],
+                ],
+            ],
+            [
+                *gt_one_hot(a.POS, COMMA, len(P), GT),  # flag if to the right of ,
+                *lt_one_hot(a.POS, EOF, len(P), LT),  # flag if to the left of $
+            ],
+        ],
+        [
+            [],
+            [
+                ["AND", [GT, LT], [BETWEEN]],
+                ["NAND", [GT, LT], [OUTSIDE]],
+            ],
+        ],
+        [
+            [
+                [
+                    # copy twin token's position
+                    ["QUERY", [BETWEEN, *slice(a.EMB, len(E))]],
+                    ["KEY", [OUTSIDE, *slice(a.EMB, len(E))]],
+                    ["VALUE", slice(a.POS, len(P))],
+                    ["PROJ", slice(POS, len(P))],
+                ],
+            ],
+            [
+                *inc_one_hot(POS, len(P)),
+            ],
+        ],
+        [
+            [
+                [
+                    # copy target token's position
+                    ["QUERY", slice(POS, len(P))],
+                    ["KEY", slice(a.POS, len(P))],
+                    ["VALUE", slice(a.EMB, len(E))],
+                    ["PROJ", slice(VALUE, len(E))],
+                ],
+            ],
+            [],
+        ],
+        [
+            [["CHAR", VALUE], r],
+        ],
+    ]
+    return run(code, f"^{s}$")
 
 
 def run_tests():
@@ -303,41 +206,28 @@ def run_tests():
         ),
     )
     # print("strawberry", count_letter("strawberry", "r") == 3.0)
-    # print(
-    #     "strcmp    ",
-    #     all(
-    #         [
-    #             strcmp("a", "a"),
-    #             strcmp("strcmp", "strcmp"),
-    #             not strcmp("hello", "world"),
-    #             not strcmp("a", "b"),
-    #             not strcmp("a", "aa"),
-    #             not strcmp("aa", "a"),
-    #         ]
-    #     ),
-    # )
-    # print(
-    #     "reverse   ",
-    #     all(
-    #         [
-    #             reverse("abc") == "cba",
-    #             reverse("a") == "a",
-    #             reverse("hello") == "olleh",
-    #             reverse("xyzab") == "bazyx",
-    #         ]
-    #     ),
-    # )
-    # print(
-    #     "kv        ",
-    #     all(
-    #         [
-    #             kv("a1b2c3,cba") == "321",
-    #             kv("a1b2z8y1,yzb") == "182",
-    #             kv("d7x3w3,xwxw") == "3333",
-    #             kv("d7x3w3,xwdw") == "3373",
-    #         ]
-    #     ),
-    # )
+    print(
+        "reverse   ",
+        all(
+            [
+                reverse("abc") == "cba",
+                reverse("a") == "a",
+                reverse("hello") == "olleh",
+                reverse("xyzab") == "bazyx",
+            ]
+        ),
+    )
+    print(
+        "kv        ",
+        all(
+            [
+                kv("a1b2c3,cba", "-4:-1") == "321",
+                kv("a1b2z8y1,yzb", "-4:-1") == "182",
+                kv("d7x3w3,xwxw", "-5:-1") == "3333",
+                kv("d7x3w3,xwdw", "-5:-1") == "3373",
+            ]
+        ),
+    )
 
 
 if __name__ == "__main__":
