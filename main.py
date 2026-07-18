@@ -1,8 +1,23 @@
+import argparse
 from model import *
 from lang import *
+from parser import parse
+
+
+def get_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--compile", type=str, help="path to program")
+    parser.add_argument("--run", type=str, help="path to program")
+    args = parser.parse_args()
+    return args
+
 
 if __name__ == "__main__":
-    print(5)
-
-    # broadcast bit, better FE, defaults, ?'s and simpler unembed
-    # compile/load/save. must do matrix unembed
+    args = get_args()
+    if args.run:
+        try:
+            with open(args.run, "r") as f:
+                code = f.read()
+                print(parse(code))
+        except FileNotFoundError as fee:
+            print(fee)
