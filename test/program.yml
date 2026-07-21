@@ -1,0 +1,21 @@
+Features:
+  pos: number 
+  bro: char
+   
+Block:
+  Attention:
+    - Head:
+        Query: token.ANY  
+        Key: token($)
+        Value: token.pos
+        Proj: pos
+  FeedForward:
+    - subtract(pos, token.pos)
+    - subtract(pos, token.pos)
+    - subtract(pos, token.pos)
+    - subtract(pos, token.pos)
+    - subtract(pos, token.pos)
+
+Unembed:
+  Char: bro 
+  Tokens: 1:-1
